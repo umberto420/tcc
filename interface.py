@@ -3,6 +3,8 @@ from tkinter import *
 from turtle import pos
 from PIL import Image, ImageTk
 from urllib.request import urlopen
+
+from mahotas import labeled_sum
 import main 
 import os
 import shutil
@@ -25,6 +27,21 @@ nomePesquisa = Label(janela, text="")
 profile = Button(janela, text='')
 posts = Button(janela, text='')
 delete = Button(janela, text='')
+labelUser = Label(janela, text="")
+loginUser = Label(janela, text="")
+labelPassword = Label(janela, text="")
+loginPassword = Label(janela, text="")
+loginButton = Button(janela, text="")
+errorMsg = Label(janela, text="")
+likes = Label(janela, text="")
+location = Label(janela, text="")
+taggedUsers = Label(janela, text="")
+titulo = Label(janela, text="")
+hashtags = Label(janela, text="")
+mencoes = Label(janela, text="")
+photoPost = Label(janela, text="")
+dataPost = Label(janela, text="")
+voltar = Label(janela, text="")
 #moreInfo = Label(janela, text="More info: ")
 #função historico
 pasta = './'
@@ -32,16 +49,16 @@ num = 0
 historico = []
 for diretorio, subpastas, arquivos in os.walk(pasta):
     if(diretorio.find("\\") == -1):
-        if(num > 0):
+        if(num > 1):
             historico.append(diretorio)
         #print(diretorio)
         num = num+1
 
-num = num - 2
+num = num - 3
 #print(historico)
 
 def openProfile(profile):
-    global accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image, postInterface, pastasPost
+    global accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image, postInterface, pastasPost, labelUser, loginUser, labelPassword, loginPassword, loginButton, errorMsg, likes, location, taggedUsers, titulo, hashtags, mencoes, photoPost, dataPost, voltar
     accountId.destroy()
     username.destroy()
     name.destroy()
@@ -52,6 +69,21 @@ def openProfile(profile):
     biography.destroy()
     profilePhoto.destroy()
     image.destroy()
+    labelUser.destroy()
+    loginUser.destroy()
+    labelPassword.destroy()
+    loginPassword.destroy()
+    loginButton.destroy()
+    errorMsg.destroy()
+    likes.destroy()
+    location.destroy()
+    taggedUsers.destroy()
+    titulo.destroy()
+    hashtags.destroy()
+    mencoes.destroy()
+    photoPost.destroy()
+    dataPost.destroy()
+    voltar.destroy()
     if(postInterface.__len__() != 0):
         y=0
         while(y < pastasPost.__len__()):
@@ -86,15 +118,96 @@ def openProfile(profile):
     image.image = photo
     image.grid(column=1, row=13)
 
-def openPhoto(path):
-    global nomePesquisa
-    file = open("./"+nomePesquisa+"/"+ path + "/dados.txt", "r")
-    print(file.readlines())
+def voltarF():
+    global pastasPost, postInterface, likes, location, taggedUsers, titulo, hashtags, mencoes, photoPost, dataPost, voltar
+    likes.destroy()
+    location.destroy()
+    taggedUsers.destroy()
+    titulo.destroy()
+    hashtags.destroy()
+    mencoes.destroy()
+    photoPost.destroy()
+    dataPost.destroy()
+    voltar.destroy()
+    postInterface = []
+    y=0
+    column = -1
+    row = -23
+    while(y < pastasPost.__len__()):
+        postInterface.append(Button(janela, text=pastasPost[y], command=lambda m = pastasPost[y]: openPost(m)))
+        if(y%23 == 0):
+            row = row+23
+            column = column+1
+        
+        postInterface[y].grid(column= 3+column, row=4+y-row)
+        y = y + 1
+
+def openPost(path):
+    global nomePesquisa, pastasPost, postInterface, likes, location, taggedUsers, titulo, hashtags, mencoes, photoPost, dataPost, voltar
+    y=0
+    while(y < pastasPost.__len__() and pastasPost != "login"):
+        postInterface[y].destroy()
+        y = y + 1
+    file = open("./"+nomePesquisa.cget("text")+"/"+ path + "/dados.txt", "r")
+    content = file.readlines()
+    content = [x. rstrip('\n') for x in content]
+    voltar = Button(janela, text="Voltar", command=voltarF)
+    voltar.grid(column=4, row=3)
+    dataPost = Label(janela, text="Data: "+content[7])
+    dataPost.grid(column=3, row=4)
+    location = Label(janela, text="Localização: "+content[1])
+    location.grid(column=3, row=5)
+    likes = Label(janela, text="Likes: "+content[0])
+    likes.grid(column=3, row=6)
+    titulo = Label(janela, text="Titulo: "+content[3])
+    titulo.grid(column=3, row=7)
+    taggedUsers = Label(janela, text="Tagged Users: "+ content[2])
+    taggedUsers.grid(column=3, row=8)
+    hashtags = Label(janela, text="Hashtags: "+content[4])
+    hashtags.grid(column=3, row=9)
+    mencoes = Label(janela, text="Menções: "+content[1])
+    mencoes.grid(column=3, row=10)
+    u = urlopen(content[6])
+    raw_data = u.read()
+    u.close()
+    photo = ImageTk.PhotoImage(data=raw_data)
+    photoPost = Label(janela, image=photo, width=400, height=400)
+    photoPost.image = photo
+    photoPost.grid(column=3, row=11)
     
+    
+def getLogin():
+    global errorMsg, postInterface, labelUser, loginUser, labelPassword, loginPassword, loginButton, pastasPost
+    pastasPost = main.login(loginUser.get(), loginPassword.get())
+    if(pastasPost == 'error'):
+        errorMsg.destroy()
+        errorMsg = Label(janela, text="Erro ao realizar login tente novamente.")
+        errorMsg.grid(column=4, row=6)
+    else:
+        labelUser.destroy()
+        loginUser.destroy()
+        labelPassword.destroy()
+        loginPassword.destroy()
+        loginButton.destroy()
+        errorMsg.destroy()
+        postInterface = []
+        y=0
+        column = -1
+        row = -23
+        while(y < pastasPost.__len__()):
+            postInterface.append(Button(janela, text=pastasPost[y], command=lambda m = pastasPost[y]: openPost(m)))
+            if(y%23 == 0):
+                row = row+23
+                column = column+1
+            
+            postInterface[y].grid(column= 3+column, row=4+y-row)
+            y = y + 1
+        print(x)
+
 postInterface = []
 pastasPost = []
 def openPosts(x):
-    global postInterface, pastasPost, accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image
+    global postInterface, pastasPost, accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image, labelUser, loginUser, labelPassword, loginPassword, loginButton, errorMsg
     accountId.destroy()
     username.destroy()
     name.destroy()
@@ -105,26 +218,46 @@ def openPosts(x):
     biography.destroy()
     profilePhoto.destroy()
     image.destroy()
+    labelUser.destroy()
+    loginUser.destroy()
+    labelPassword.destroy()
+    loginPassword.destroy()
+    loginButton.destroy()
+    errorMsg.destroy()
+    
     if(postInterface.__len__() != 0):
         y=0
         while(y < pastasPost.__len__()):
             postInterface[y].destroy()
             y = y + 1
-        
-    pastasPost = main.posts(x)
-    postInterface = []
-    y=0
-    column = -1
-    row = -23
-    while(y < pastasPost.__len__()):
-        postInterface.append(Button(janela, text=pastasPost[y], command=lambda m = pastasPost[y]: openPhoto(m)))
-        if(y%23 == 0):
-            row = row+23
-            column = column+1
-        
-        postInterface[y].grid(column= 3+column, row=4+y-row)
-        y = y + 1
     print(x)
+    pastasPost = main.posts(x)
+    print(pastasPost)
+    if(pastasPost == "login"):
+        labelUser = Label(janela, text="Username or Email:")
+        labelUser.grid(column=3, row=4)
+        loginUser = Entry(janela)
+        loginUser.grid(column=4, row=4)
+        labelPassword = Label(janela, text="Password:")
+        labelPassword.grid(column=3, row=5)
+        loginPassword = Entry(janela)
+        loginPassword.grid(column=4, row=5)
+        loginButton = Button(janela, text="Login", command = getLogin)
+        loginButton.grid(column=3, row=6)
+    else:
+        postInterface = []
+        y=0
+        column = -1
+        row = -23
+        while(y < pastasPost.__len__()):
+            postInterface.append(Button(janela, text=pastasPost[y], command=lambda m = pastasPost[y]: openPost(m)))
+            if(y%23 == 0):
+                row = row+23
+                column = column+1
+            
+            postInterface[y].grid(column= 3+column, row=4+y-row)
+            y = y + 1
+        print(x)
 
 def leE1():
     global historicoInterface
@@ -158,7 +291,7 @@ def openUser(x):
     posts.grid(column=3, row=3)
 
 def refresh():
-    global accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image, nomePesquisa, profile, posts, historicoInterface, delete, num, postInterface, pastasPost
+    global accountId, username, name, verified, followees, followers, website, biography, profilePhoto, image, nomePesquisa, profile, posts, historicoInterface, delete, num, postInterface, pastasPost, labelUser, loginUser, labelPassword, loginPassword, loginButton, errorMsg, likes, location, taggedUsers, titulo, hashtags, mencoes, photoPost, dataPost, voltar
     delete.destroy()
     profile.destroy()
     posts.destroy()
@@ -173,18 +306,32 @@ def refresh():
     biography.destroy()
     profilePhoto.destroy()
     image.destroy()
-
+    labelUser.destroy()
+    loginUser.destroy()
+    labelPassword.destroy()
+    loginPassword.destroy()
+    loginButton.destroy()
+    errorMsg.destroy()
+    likes.destroy()
+    location.destroy()
+    taggedUsers.destroy()
+    titulo.destroy()
+    hashtags.destroy()
+    mencoes.destroy()
+    photoPost.destroy()
+    dataPost.destroy()
+    voltar.destroy()
     pasta = './'
     num = 0
     historico = []
     for diretorio, subpastas, arquivos in os.walk(pasta):
         if(diretorio.find("\\") == -1):
-            if(num > 0):
+            if(num > 1):
                 historico.append(diretorio)
             #print(diretorio)
             num = num+1
 
-    num = num - 2
+    num = num - 3
     x = 0
     while(x < num):
         historicoInterface[x].destroy()
@@ -193,7 +340,7 @@ def refresh():
         x = x + 1
 
     y=0
-    while(y < pastasPost.__len__()):
+    while(y < pastasPost.__len__() and pastasPost != "login"):
         postInterface[y].destroy()
         y = y + 1
 

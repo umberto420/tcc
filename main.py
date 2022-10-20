@@ -32,24 +32,26 @@ def remove_emojis(data):
 def posts(nome):
     PROFILE = nome
     profile = Profile.from_username(L.context, PROFILE)
+    print(profile.is_private)
+    if(profile.is_private == True):
+        return "login"
+    else:
+        posts_sorted_by_likes = sorted(profile.get_posts(), key=lambda post: post.likes, reverse=True)
 
-
-    posts_sorted_by_likes = sorted(profile.get_posts(), key=lambda post: post.likes, reverse=True)
-
-    num = 1
+        num = 1
     
-    for post in posts_sorted_by_likes:
-       data = str(post.date)
-       pasta = './'+nome+"/"+str(data.split(" ")[0])
-       num = num+1
-       #shutil.rmtree(pasta)
-       print(pasta)
-       if os.path.isdir(pasta):
-            shutil.rmtree(pasta)
+        for post in posts_sorted_by_likes:
+            data = str(post.date)
+            pasta = './'+nome+"/"+str(data.split(" ")[0])
+            num = num+1
+            #shutil.rmtree(pasta)
+            print(pasta)
+            if os.path.isdir(pasta):
+                shutil.rmtree(pasta)
 
-       os.mkdir(pasta)
-       file = open(pasta+"/dados.txt", "w")
-       text = [str(post.likes) + "\n", 
+            os.mkdir(pasta)
+            file = open(pasta+"/dados.txt", "w")
+            text = [str(post.likes) + "\n", 
                str(post.location)+ "\n", 
                str(post.tagged_users)+ "\n", 
                remove_emojis(str(post.caption))+ "\n", 
@@ -58,21 +60,21 @@ def posts(nome):
                str(post.url)+ "\n", 
                str(post.date_utc)+ "\n"]
 
-       file.writelines(text)  
-       file.close()
+            file.writelines(text)  
+            file.close()
        
 
-    pasta = './'+ nome
-    num = 0
-    pastas = []
-    for diretorio, subpastas, arquivos in os.walk(pasta):
-        if(num > 0):
-            print(diretorio.split("\\"))
-            pastas.append(diretorio.split("\\")[1])
-        #print(diretorio)
-        num = num+1
+        pasta = './'+ nome
+        num = 0
+        pastas = []
+        for diretorio, subpastas, arquivos in os.walk(pasta):
+            if(num > 0):
+                print(diretorio.split("\\"))
+                pastas.append(diretorio.split("\\")[1])
+            #print(diretorio)
+            num = num+1
+        num = num - 2   
 
-    num = num - 2    
     return pastas
 
 def profile(nome):     
@@ -89,3 +91,56 @@ def profile(nome):
         "profilePic": profile.profile_pic_url,
         "website": profile.external_url
     }
+
+def login(user, passowrd):
+    L = instaloader.Instaloader()
+
+    try:
+        L.login(user, passowrd) == None
+        print("ok")    
+        profile = Profile.from_username(L.context, user)
+        posts_sorted_by_likes = sorted(profile.get_posts(), key=lambda post: post.likes, reverse=True)
+
+        num = 1
+    
+        for post in posts_sorted_by_likes:
+            data = str(post.date)
+            pasta = './'+user+"/"+str(data.split(" ")[0])
+            num = num+1
+            #shutil.rmtree(pasta)
+            print(pasta)
+            if os.path.isdir(pasta):
+                shutil.rmtree(pasta)
+
+            os.mkdir(pasta)
+            file = open(pasta+"/dados.txt", "w")
+            text = [str(post.likes) + "\n", 
+               str(post.location)+ "\n", 
+               str(post.tagged_users)+ "\n", 
+               remove_emojis(str(post.caption))+ "\n", 
+               str(post.caption_hashtags)+ "\n", 
+               str(post.caption_mentions)+ "\n", 
+               str(post.url)+ "\n", 
+               str(post.date_utc)+ "\n"]
+
+            file.writelines(text)  
+            file.close()
+       
+
+        pasta = './'+ user
+        num = 0
+        pastas = []
+        for diretorio, subpastas, arquivos in os.walk(pasta):
+            if(num > 0):
+                print(diretorio.split("\\"))
+                pastas.append(diretorio.split("\\")[1])
+            #print(diretorio)
+            num = num+1
+        num = num - 2   
+        return pastas
+    except:
+        return "error"
+    
+
+    
+                                
